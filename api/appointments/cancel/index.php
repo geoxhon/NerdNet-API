@@ -36,15 +36,18 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $myAppointments = getMyAppointments();
     foreach($myAppointments as $appointment){
         if($appointment["appointmentId"]==$data["appointmentId"]){
-
             if($appointment["status"] == 2){
                 $jsonResult->success=false;
                 $jsonResult->reason="Operation not allowed, can't cancel a cancelled appointment.";
                 http_response_code(403);
                 die(json_encode($jsonResult));
             }
-            
-            $sql = "UPDATE appointments SET status = 2 WHERE id = ?";
+            if($_SESSION["type"]==0 && $appointment["status"] == 0){
+                $sql = "DELETE FROM appointments WHERE id = ?";  //Prevent a student from creating tons of cancelled appointments.
+            }
+            else{
+                $sql = "UPDATE appointments SET status = 2 WHERE id = ?";
+            }
             if($stmt = mysqli_prepare($link, $sql)){
                 mysqli_stmt_bind_param($stmt, "i", $param_appointmentId);
                 $param_appointmentId = $data["appointmentId"];
